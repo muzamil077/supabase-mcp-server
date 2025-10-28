@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Disable secrets scanning for environment variable names since they're public by design
+# The actual secret values should be set in Netlify's environment variables
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+

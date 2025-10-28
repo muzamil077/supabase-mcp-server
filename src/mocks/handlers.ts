@@ -125,7 +125,7 @@ export const handlers = [
   }),
 
   // Mock backend proxy endpoints (for local development)
-  http.post('http://localhost:3001/api/spotify/token', async () => {
+  http.post('*/api/spotify/token', async () => {
     await withDelay(150);
     return HttpResponse.json({
       access_token: 'mock-proxy-token',
@@ -134,7 +134,7 @@ export const handlers = [
     });
   }),
 
-  http.get('http://localhost:3001/api/spotify/search', async ({ request }) => {
+  http.get('*/api/spotify/search', async ({ request }) => {
     await withDelay(250);
 
     const url = new URL(request.url);

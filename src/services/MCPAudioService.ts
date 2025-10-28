@@ -19,9 +19,16 @@ export class MCPAudioService {
 
   constructor() {
     // Use existing backend proxy for CORS handling
-    const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL || 'http://localhost:3001';
-    this.baseUrl = import.meta.env.VITE_USE_BACKEND_PROXY
-      ? `${PROXY_SERVER_URL}/api/spotify`
+    const USE_PROXY = import.meta.env.VITE_USE_BACKEND_PROXY === 'true';
+    const getProxyUrl = () => {
+      if (typeof window !== 'undefined') {
+        return window.location.origin;
+      }
+      return import.meta.env.VITE_PROXY_SERVER_URL || '';
+    };
+    
+    this.baseUrl = USE_PROXY
+      ? `${getProxyUrl()}/.netlify/functions/spotify-proxy`
       : 'https://api.spotify.com/v1';
   }
 

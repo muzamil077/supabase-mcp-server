@@ -9,8 +9,8 @@
     "dev:full": "concurrently \"npm run server:dev\" \"npm run dev\" --names \"server,client\" --prefix-colors \"blue,green\"",
     "server": "node server/index.js",
     "server:dev": "nodemon server/index.js",
-    "build": "tsc && vite build",
-    "build:server": "echo 'Server is plain JS, no build needed'",
+    "build": "vite build",
+    "vercel-build": "npm run build",
     "preview": "vite preview",
     "start": "concurrently \"npm run server\" \"npm run preview\" --names \"server,client\" --prefix-colors \"blue,green\""
   },

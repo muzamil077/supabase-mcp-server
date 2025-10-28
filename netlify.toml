@@ -2,12 +2,18 @@
   command = "npm run build"
   publish = "dist"
 
-# Environment variables for Netlify deployment
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [build.environment]
-  VITE_USE_BACKEND_PROXY = "false"
   SECRETS_SCAN_ENABLED = "false"
-  
-# Add .env to ignored files during secrets scan
+  VITE_USE_BACKEND_PROXY = "true"
+
 [build.secrets_scan]
   enabled = false
 

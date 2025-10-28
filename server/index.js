@@ -8,16 +8,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration - allow multiple frontend ports during development
+// CORS configuration - allow all origins in production
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:5173',
-    'http://localhost:5175',
-    'http://localhost:5176',
-    'http://localhost:5177',
-    'http://localhost:5178'
-  ],
+  origin: process.env.NODE_ENV === 'production' 
+    ? '*' 
+    : [
+        process.env.FRONTEND_URL || 'http://localhost:5173',
+        'http://localhost:5173',
+        'http://localhost:5175',
+        'http://localhost:5176',
+        'http://localhost:5177',
+        'http://localhost:5178'
+      ],
   credentials: true
 }));
 

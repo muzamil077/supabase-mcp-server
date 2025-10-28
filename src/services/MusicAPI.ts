@@ -137,6 +137,8 @@ export const useGetTracksQuery = (
     } as any;
   }
 
+  // Handle search queries with real API
+  if (searchQuery) {
     if (category === 'tracks') {
       return spotifyApi.useSearchMusicQuery({
         query: searchQuery,
@@ -152,20 +154,8 @@ export const useGetTracksQuery = (
     }
   }
 
-  // Handle similar tracks (related content)
+  // Handle similar tracks
   if (showSimilarTracks) {
-    // In mock mode, return a subset of popular tracks
-    if (useMockData) {
-      const mockData = getMockData('tracks', 'popular');
-      return {
-        data: { results: mockData.results.slice(0, 10) },
-        isLoading: false,
-        isFetching: false,
-        isError: false,
-        error: undefined
-      } as any;
-    }
-
     return spotifyApi.useSearchMusicQuery({
       query: 'recommended',
       type: 'track',
@@ -173,156 +163,10 @@ export const useGetTracksQuery = (
     }, { skip });
   }
 
-  // Content strategy trigger - return playlist ID or ADVANCED_SEARCH strategy
-  const getPlaylistIdForSection = (category: string, type: string): string | null => {
-    return CONTENT_STRATEGIES[`${category}-${type}`] || null;
-  };
-
-  // Deduplication helper to ensure unique content across sections
-  const deduplicateResults = (data: any) => {
-    if (!data?.results) return data;
-
-    const seen = new Set();
-    const uniqueResults = data.results.filter((track: any) => {
-      const key = `${track.name?.toLowerCase()}-${track.artist?.toLowerCase()}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    return { ...data, results: uniqueResults };
-  };
-
-  // Consistent popularity threshold for high-quality mainstream hits
-  const POPULARITY_THRESHOLD = 75;
-
-  const getContentFilter = (_type: string) => {
-    // Default: exclude ALL ambient content for mainstream sections (Latest Hits)
-    return (track: any) => {
-      const name = track.name?.toLowerCase() || '';
-      const isAmbient = /sleep|white noise|rain|nature sounds|meditation|relax|ambient|loopable|asmr|calm|peaceful|gentle|soothing/i.test(name);
-      return !isAmbient;
-    };
-  };
-
-  // Advanced filtering with consistent popularity thresholds and strict artist diversity
-  const advancedFilterResults = (data: any, type: string) => {
-    if (!data?.results) return data;
-
-    // Step 1: Basic deduplication
-    const deduplicated = deduplicateResults(data);
-
-    // Step 2: Apply content filtering based on type
-    const contentFilter = getContentFilter(type);
-    const contentFiltered = deduplicated.results.filter(contentFilter);
-
-    // Step 2.5: Sort by popularity to ensure we get the highest quality tracks first
-    const sortedByPopularity = contentFiltered.sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0));
-
-    // Step 3: Artist and Album diversity - max 1 track per artist, more flexible on albums
-    const artistCounts = new Map();
-    const albumCounts = new Map();
-    const diverseResults = sortedByPopularity.filter((track: any) => {
-      const artist = track.artist?.toLowerCase();
-      const album = track.album?.toLowerCase();
-
-      if (!artist) return false;
-
-      // Check artist diversity (still strict - max 1 per artist)
-      const artistCount = artistCounts.get(artist) || 0;
-      if (artistCount >= 1) {
-        return false;
-      }
-
-      // Check album diversity - less aggressive, allow 2 tracks per album to ensure enough results
-      if (album) {
-        const albumCount = albumCounts.get(album) || 0;
-        if (albumCount >= 2) {
-          return false;
-        }
-        albumCounts.set(album, albumCount + 1);
-      }
-
-      artistCounts.set(artist, artistCount + 1);
-      return true;
-    });
-
-    // Step 4: Consistent 75+ popularity filtering
-    const qualityFiltered = diverseResults.filter((track: any) => (track.popularity || 0) >= POPULARITY_THRESHOLD);
-
-    return { ...data, results: qualityFiltered };
-  };
-
-  // Handle different categories using simple 2024/2025 top tracks strategy
-  const playlistId = getPlaylistIdForSection(category || '', type || '');
-
-  if (playlistId === ADVANCED_SEARCH_STRATEGY || playlistId) {
-    // Simple two-query strategy for 2024 and 2025 top tracks
-    const query2024 = 'year:2024';
-    const query2025 = 'year:2025';
-
-    const query1Result = spotifyApi.useSearchMusicQuery({
-      query: query2024,
-      type: category === 'albums' ? 'album' : 'track',
-      limit: 50
-    }, { skip });
-
-    const query2Result = spotifyApi.useSearchMusicQuery({
-      query: query2025,
-      type: category === 'albums' ? 'album' : 'track',
-      limit: 50
-    }, { skip });
-
-    // Combine results from both 2024 and 2025 queries
-    const allResults = [query1Result, query2Result];
-    const isMultiQuery = true;
-
-    // Check if both queries are loaded
-    const allLoaded = allResults.every((result) => !result.isLoading);
-    const hasError = allResults.some((result) => result.isError);
-    const isLoading = allResults.some((result) => result.isLoading);
-
-    if (isMultiQuery && allLoaded && !hasError) {
-      // Combine results from both 2024 and 2025 queries
-      const combinedTracks: any[] = [];
-
-      allResults.forEach((result) => {
-        if (!skip && result.data?.results) {
-          combinedTracks.push(...result.data.results);
-        }
-      });
-
-      if (combinedTracks.length > 0) {
-        // Apply enhanced filtering to combined results
-        const combinedData = { results: combinedTracks };
-        const enhancedData = advancedFilterResults(combinedData, type || '');
-
-        return {
-          data: enhancedData,
-          isLoading: false,
-          isFetching: false,
-          isError: false,
-          error: undefined
-        } as any;
-      }
-    }
-
-    // For single-query sections or while loading, use primary query
-    return {
-      ...query1Result,
-      data: query1Result.data ? advancedFilterResults(query1Result.data, type || '') : undefined,
-      isLoading: isLoading,
-      isError: hasError
-    };
-  }
-
-
-
-  // Default fallback - empty results
+  // Fallback for sections with mock data
+  console.log('⚠️ No Spotify credentials, returning empty results. Use mock data flag.');
   return {
-    data: {
-      results: []
-    },
+    data: { results: [] },
     isLoading: false,
     isFetching: false,
     isError: false,

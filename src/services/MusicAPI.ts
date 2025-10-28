@@ -77,23 +77,26 @@ export const useGetTracksQuery = (
 
   // Check if we should use mock data
   const useMockData = shouldUseMockData();
-
-  // Early return with mock data if no API available
-  if (useMockData && !searchQuery && !showSimilarTracks) {
-    const mockData = getMockData(category || 'tracks', type || 'popular');
-    return {
-      data: mockData,
-      isLoading: false,
-      isFetching: false,
-      isError: false,
-      error: undefined
-    } as any;
-  }
   
-  // Handle search queries
-  if (searchQuery) {
-    // In mock mode, return filtered mock data for search
-    if (useMockData) {
+  console.log('🔍 MusicAPI Debug:', { useMockData, hasCredentials: !!(import.meta.env.VITE_SPOTIFY_CLIENT_ID && import.meta.env.VITE_SPOTIFY_CLIENT_SECRET) });
+
+  // Always return mock data if no credentials (for Netlify deployment without Spotify API)
+  if (useMockData) {
+    console.log('📦 Using mock data - no credentials available');
+    
+    if (!searchQuery && !showSimilarTracks) {
+      const mockData = getMockData(category || 'tracks', type || 'popular');
+      return {
+        data: mockData,
+        isLoading: false,
+        isFetching: false,
+        isError: false,
+        error: undefined
+      } as any;
+    }
+  
+    // Handle search queries with mock data
+    if (searchQuery) {
       // Get comprehensive mock data from all sources
       const latestHits = getMockData('tracks', 'latest');
       const popularTracks = getMockData('tracks', 'popular');
@@ -110,6 +113,29 @@ export const useGetTracksQuery = (
         error: undefined
       } as any;
     }
+    
+    // Similar tracks with mock data
+    if (showSimilarTracks) {
+      const mockData = getMockData('tracks', 'popular');
+      return {
+        data: { results: mockData.results.slice(0, 10) },
+        isLoading: false,
+        isFetching: false,
+        isError: false,
+        error: undefined
+      } as any;
+    }
+    
+    // Default mock data
+    const mockData = getMockData(category || 'tracks', type || 'popular');
+    return {
+      data: mockData,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: undefined
+    } as any;
+  }
 
     if (category === 'tracks') {
       return spotifyApi.useSearchMusicQuery({

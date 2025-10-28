@@ -19,8 +19,9 @@ export class MCPAudioService {
 
   constructor() {
     // Use existing backend proxy for CORS handling
-    const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL || 'http://localhost:3001';
-    this.baseUrl = import.meta.env.VITE_USE_BACKEND_PROXY
+    const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL || '';
+    const USE_PROXY = import.meta.env.VITE_USE_BACKEND_PROXY === 'true';
+    this.baseUrl = (USE_PROXY && PROXY_SERVER_URL)
       ? `${PROXY_SERVER_URL}/api/spotify`
       : 'https://api.spotify.com/v1';
   }

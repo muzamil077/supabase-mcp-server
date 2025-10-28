@@ -24,8 +24,8 @@ export const useAudioPlayer = () => {
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressInterval = useRef<NodeJS.Timeout | null>(null);
-  const simulationInterval = useRef<NodeJS.Timeout | null>(null);
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const simulationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialize audio element
   useEffect(() => {
